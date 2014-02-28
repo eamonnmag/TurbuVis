@@ -15,6 +15,7 @@ PoemTurbulence.variables = {
     line: d3.svg.line().interpolate("basic"),
     textStyle: {font: '13px Helvetica, Verdana', "font-weight": "normal"}
 }
+
 var svg;
 var data = {};
 var xScale, yScale;
@@ -28,7 +29,6 @@ PoemTurbulence.rendering = {
             yScale = d3.scale.linear().domain([1, 3]).range([10, (h - 10)]);
 
             svg = d3.select(placement).append("svg").attr("width", w).attr("height", h).append("g");
-
             svg.selectAll("circle").data(data).enter().append("circle").attr("r", 1).style("fill", "#ccc").attr("cx",function (d) {
                 return xScale(d[1]);
             }).attr("cy", function (d) {
@@ -37,10 +37,12 @@ PoemTurbulence.rendering = {
 
             // get the path...
             PoemTurbulence.variables.path = svg.append("path").attr("d", PoemTurbulence.rendering.path(data));
+            PoemTurbulence.variables.marker = svg.append("circle").attr("r", 6).style("stroke", "#ccc").style("fill", "none")
+                .attr("transform", "translate(-10-, -100)");
 
             setInterval(function () {
                 PoemTurbulence.rendering.transition();
-            }, 1000)
+            }, 600)
         });
     },
 
@@ -53,69 +55,31 @@ PoemTurbulence.rendering = {
         }));
     },
 
-    midPoint: function (point) {
-
-        if (PoemTurbulence.variables.lastPoint > 0) {
-            var previousPoint = PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint - 1];
-
-            console.log(point);
-            console.log(previousPoint);
-
-            var midY = (Math.max(previousPoint[0], point[0]) - Math.min(previousPoint[0], point[0])) / 2;
-            // if on the same line, don't curve
-            var midX = (Math.max(previousPoint[1], point[1]) - Math.min(previousPoint[1], point[1])) / 2;
-
-            console.log("midY = " + midY);
-            console.log("midX = " + midX);
-
-            //  var yValue = yScale.invert(midy);
-            return [point[0] + midY + 5, point[1] + midX + 5];
-        }
-
-        // by default, return the same point
-        return point;
-
-    },
-
     transition: function () {
 
         var nextPoint = PoemTurbulence.rendering.translateAlong();
-//        var midPoint = PoemTurbulence.rendering.midPoint(nextPoint);
+        //var midPoint = PoemTurbulence.rendering.midPoint(nextPoint);
 
-        var duration = 100;
-//        PoemTurbulence.variables.marker.transition()
-//            .duration(duration).ease("linear")
-//
-//            .style("fill", function () {
-//                return (PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint][2] == "S") ? "#27aae1" : "#F15A29";
-//            })
-//            .attr("transform", "translate(" + midPoint[1] + "," + midPoint[0] + ")");
-
-//        PoemTurbulence.variables.marker.transition()
-//            .duration(duration)
-//            .delay(100).ease("linear")
-//            .style("fill", function () {
-//                return (PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint][2] === "S") ? "#27aae1" : "#F15A29";
-//            })
-//            .attr("transform", "translate(" + nextPoint[1] + "," + nextPoint[0] + ")")
-//            .each("end", PoemTurbulence.rendering.transition);
-
+        var duration = 200;
 
         if (PoemTurbulence.variables.lastPoint > 0) {
             var previousPoint = PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint - 1];
 
+            PoemTurbulence.variables.marker.transition()
+                .duration(duration).ease("cubic").style("stroke",function () {
+                    return (PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint][2] === "S") ? "#27aae1" : "#F15A29";
+                }).attr("transform", "translate(" + nextPoint[0] + "," + nextPoint[1] + ")").style("stroke-width", 2);
 
             for (var trailIndex = 0; trailIndex < 50; trailIndex++) {
                 svg.append("circle").attr("r", 2)
                     .style("fill", function () {
                         return (previousPoint[2] === "S") ? "#27aae1" : "#F15A29";
                     })
+                    .attr("id", "circle-" + trailIndex)
                     .style("opacity", 0)
-
-
                     .attr("transform", "translate(" + previousPoint[0] + "," + previousPoint[1] + ")")
-                    .transition().delay(trailIndex).duration(duration * (trailIndex * .25)).ease("linear")
-                    .attr("transform", "translate(" + nextPoint[0] + "," + nextPoint[1] + ")").style("opacity", .1)
+                    .transition().delay(trailIndex).duration(duration*trailIndex).ease("cubic")
+                    .attr("transform", "translate(" + nextPoint[0] + "," + nextPoint[1] + ")").style("opacity", .3)
                     .style("fill", function () {
                         return (PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint][2] === "S") ? "#27aae1" : "#F15A29";
                     })
@@ -135,7 +99,6 @@ PoemTurbulence.rendering = {
         PoemTurbulence.variables.lastPoint += 1;
         var p = PoemTurbulence.variables.points[PoemTurbulence.variables.lastPoint];
         return [p[0], p[1]];
-//        return "translate(" + p[1] + "," + p[0] + ")";//Move marker
     }
 
 
